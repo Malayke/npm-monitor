@@ -245,11 +245,11 @@ export default {
 			// Parse the XML content
 			// console.log('\nParsing RSS feed...');
 			const packages = parseXML(xmlText);
-			console.log(`Processing ${packages.length} packages`);
+			// console.log(`Processing ${packages.length} packages`);
 			
 			// Process each package
 			for (const pkg of packages) {
-				console.log(`\nProcessing package: ${pkg.name}`);
+				// console.log(`\nProcessing package: ${pkg.name}`);
 				
 				// Get the latest version
 				const version = await getLatestVersionFromAPI(pkg.name);
