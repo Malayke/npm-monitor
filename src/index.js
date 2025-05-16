@@ -149,12 +149,12 @@ async function parseVersions(html) {
 								if (timeDiff < minTimeDiff) {
 									minTimeDiff = timeDiff;
 									closestVersion = currentVersion;
-									console.log(`Package: ${packageName} - New closest version: ${closestVersion}`);
+									// console.log(`Package: ${packageName} - New closest version: ${closestVersion}`);
 								}
 							}
 						}
 					} catch (error) {
-						console.error(`Error parsing date for ${packageName} - version ${currentVersion}`, error);
+						console.error(`Error parsing date for version ${currentVersion}`, error);
 					}
 				}
 			}
