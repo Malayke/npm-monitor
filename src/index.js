@@ -64,9 +64,22 @@ function parseXML(xmlText) {
 	return items;
 }
 async function getLatestVersionFromAPI(packageName) {
-	const response = await fetch(`https://registry.npmjs.org/-/package/${packageName}/dist-tags`);
-	const data = await response.json();
-	return data.latest;
+	try {
+		const response = await fetch(`https://registry.npmjs.org/-/package/${packageName}/dist-tags`);
+		if (!response.ok) {
+			console.error(`Failed to fetch version for ${packageName}: ${response.status} ${response.statusText}`);
+			return null;
+		}
+		const data = await response.json();
+		if (!data || !data.latest) {
+			console.error(`No latest version found for ${packageName}`);
+			return null;
+		}
+		return data.latest;
+	} catch (error) {
+		console.error(`Error fetching version for ${packageName}:`, error);
+		return null;
+	}
 }
 // Function to parse version information from npm package page
 async function getLatestVersion(packageLink) {
@@ -254,6 +267,22 @@ export default {
 				// Get the latest version
 				const version = await getLatestVersionFromAPI(pkg.name);
 				// console.log(`Latest version: ${version}`);
+				
+				// Debug logging
+				console.log('Debug values before DB insert:');
+				console.log('pkg.name:', pkg.name);
+				console.log('version:', version);
+				console.log('pkg.published_at:', pkg.published_at);
+				
+				// Validate values before insert
+				if (!pkg.name || !version || !pkg.published_at) {
+					console.error('Skipping database insert due to missing values:', {
+						name: pkg.name,
+						version: version,
+						published_at: pkg.published_at
+					});
+					continue;
+				}
 				
 				// Save package to database
 				await env.DB.prepare(
