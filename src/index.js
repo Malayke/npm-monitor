@@ -24,7 +24,7 @@ function parseXML(xmlText) {
 	const creatorRegex = /<dc:creator><!\[CDATA\[(.*?)\]\]><\/dc:creator>/;
 
 	let match;
-	let count = 0;
+	// let count = 0;
 	while ((match = itemRegex.exec(xmlText)) !== null) {
 		// console.log(`Processing item ${count + 1}...`);
 		const itemContent = match[1];
@@ -57,7 +57,7 @@ function parseXML(xmlText) {
 		} else {
 			console.log('Failed to parse item:', itemContent);
 		}
-		count++;
+		// count++;
 	}
 
 	// console.log(`Total items parsed: ${items.length}`);
