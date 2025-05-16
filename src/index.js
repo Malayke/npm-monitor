@@ -255,41 +255,30 @@ export default {
 				const version = await getLatestVersionFromAPI(pkg.name);
 				// console.log(`Latest version: ${version}`);
 				
-				// Check if package exists in database
-				// console.log('Checking database for existing package...');
-				const existingPackage = await env.DB.prepare(
-					'SELECT * FROM npm_packages WHERE name = ? AND version = ?'
-				).bind(pkg.name, version).first();
+				// Save package to database
+				await env.DB.prepare(
+					'INSERT INTO npm_packages (name, version, published_at) VALUES (?, ?, ?)'
+				).bind(pkg.name, version, pkg.published_at).run();
+				console.log(`Package: ${pkg.name} - ${version} saved to database`);
 				
-				if (!existingPackage) {
-					// console.log(`Package ${pkg.name} with version ${version} not found in database, saving...`);
-					// Save new package to database
-					await env.DB.prepare(
-						'INSERT INTO npm_packages (name, version, published_at) VALUES (?, ?, ?)'
-					).bind(pkg.name, version, pkg.published_at).run();
-					console.log(`Package: ${pkg.name} - ${version} saved to database`);
+				// Send notification to Slack
+				if (env.SLACK_WEBHOOK_URL) {
+					// console.log('Sending Slack notification...');
+					const message = {
+						data: `New npm package published!\nName: ${pkg.name}\nVersion: ${version}\nDescription: ${pkg.description}\nCreator: ${pkg.creator}\nPublished at: ${pkg.published_at}`,
+						package: pkg.name,
+					};
 					
-					// Send notification to Slack
-					if (env.SLACK_WEBHOOK_URL) {
-						// console.log('Sending Slack notification...');
-						const message = {
-							data: `New npm package published!\nName: ${pkg.name}\nVersion: ${version}\nDescription: ${pkg.description}\nCreator: ${pkg.creator}\nPublished at: ${pkg.published_at}`,
-							package: pkg.name,
-						};
-						
-						await fetch(env.SLACK_WEBHOOK_URL, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							},
-							body: JSON.stringify(message)
-						});
-						// console.log('Slack notification sent');
-					} else {
-						// console.log('No Slack webhook URL configured');
-					}
+					await fetch(env.SLACK_WEBHOOK_URL, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(message)
+					});
+					// console.log('Slack notification sent');
 				} else {
-					// console.log('Package already exists in database');
+					// console.log('No Slack webhook URL configured');
 				}
 			}
 			
