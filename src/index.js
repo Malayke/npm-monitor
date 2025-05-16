@@ -26,7 +26,7 @@ function parseXML(xmlText) {
 	let match;
 	let count = 0;
 	while ((match = itemRegex.exec(xmlText)) !== null) {
-		console.log(`Processing item ${count + 1}...`);
+		// console.log(`Processing item ${count + 1}...`);
 		const itemContent = match[1];
 		const titleMatch = itemContent.match(titleRegex);
 		const linkMatch = itemContent.match(linkRegex);
@@ -60,7 +60,7 @@ function parseXML(xmlText) {
 		count++;
 	}
 
-	console.log(`Total items parsed: ${items.length}`);
+	// console.log(`Total items parsed: ${items.length}`);
 	return items;
 }
 
@@ -149,12 +149,12 @@ async function parseVersions(html) {
 								if (timeDiff < minTimeDiff) {
 									minTimeDiff = timeDiff;
 									closestVersion = currentVersion;
-									console.log(`New closest version: ${closestVersion}`);
+									console.log(`Package: ${packageName} - New closest version: ${closestVersion}`);
 								}
 							}
 						}
 					} catch (error) {
-						console.error(`Error parsing date for version ${currentVersion}`, error);
+						console.error(`Error parsing date for ${packageName} - version ${currentVersion}`, error);
 					}
 				}
 			}
@@ -263,7 +263,7 @@ export default {
 					await env.DB.prepare(
 						'INSERT INTO npm_packages (name, version, published_at) VALUES (?, ?, ?)'
 					).bind(pkg.name, version, pkg.published_at).run();
-					// console.log('Package saved to database');
+					console.log(`Package: ${pkg.name} - ${version} saved to database`);
 					
 					// Send notification to Slack
 					if (env.SLACK_WEBHOOK_URL) {
