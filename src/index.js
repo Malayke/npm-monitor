@@ -269,7 +269,7 @@ export default {
 					if (env.SLACK_WEBHOOK_URL) {
 						console.log('Sending Slack notification...');
 						const message = {
-							data: `New npm package published!\nName: ${pkg.name}\nVersion: ${version}\nDescription: ${pkg.description}\nCreator: ${pkg.creator}\nLink: ${pkg.link}\nPublished at: ${pkg.published_at}`,
+							data: `New npm package published!\nName: ${pkg.name}\nVersion: ${version}\nDescription: ${pkg.description}\nCreator: ${pkg.creator}\nPublished at: ${pkg.published_at}`,
 							package: pkg.name,
 						};
 						
