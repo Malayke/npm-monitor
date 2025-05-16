@@ -71,11 +71,20 @@ async function getLatestVersionFromAPI(packageName) {
 			return null;
 		}
 		const data = await response.json();
-		if (!data || !data.latest) {
-			console.error(`No latest version found for ${packageName}`);
+		if (!data) {
+			console.error(`No data found for ${packageName}`);
 			return null;
 		}
-		return data.latest;
+		// If both alpha and latest tags exist, return alpha
+		if (data.alpha && data.latest) {
+			return data.alpha;
+		}
+		// Otherwise return the latest version if it exists
+		if (data.latest) {
+			return data.latest;
+		}
+		console.error(`No latest version found for ${packageName}`);
+		return null;
 	} catch (error) {
 		console.error(`Error fetching version for ${packageName}:`, error);
 		return null;
