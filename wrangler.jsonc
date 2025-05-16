@@ -23,7 +23,7 @@
 		}
 	],
 	"vars": {
-		"SLACK_WEBHOOK_URL": ""
+		"SLACK_WEBHOOK_URL": "https://hooks.slack.com/triggers/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"
 	}
 	/**
 	 * Smart Placement
