@@ -142,9 +142,9 @@ async function parseVersions(html) {
 									timeDiff
 								});
 								
-								console.log(`\nFound version: ${currentVersion}`);
-								console.log(`Version date: ${versionDate.toISOString()}`);
-								console.log(`Time difference: ${timeDiff}ms`);
+								// console.log(`\nFound version: ${currentVersion}`);
+								// console.log(`Version date: ${versionDate.toISOString()}`);
+								// console.log(`Time difference: ${timeDiff}ms`);
 								
 								if (timeDiff < minTimeDiff) {
 									minTimeDiff = timeDiff;
@@ -166,14 +166,14 @@ async function parseVersions(html) {
 	const validVersions = Array.from(versions.values())
 		.filter(v => v.date !== null && !isNaN(v.date.getTime()));
 	
-	console.log(`\nTotal versions found: ${validVersions.length}`);
+	// console.log(`\nTotal versions found: ${validVersions.length}`);
 	
 	if (validVersions.length > 0) {
 		// Sort versions by time difference for debugging
 		validVersions.sort((a, b) => a.timeDiff - b.timeDiff);
-		console.log('\nAll versions sorted by time difference:');
+		// console.log('\nAll versions sorted by time difference:');
 		validVersions.forEach(v => {
-			console.log(`Version: ${v.version}, Date: ${v.date.toISOString()}, Diff: ${v.timeDiff}ms`);
+			// console.log(`Version: ${v.version}, Date: ${v.date.toISOString()}, Diff: ${v.timeDiff}ms`);
 		});
 	}
 	
@@ -186,7 +186,7 @@ async function parseVersions(html) {
 export default {
 	async fetch(req) {
 		try {
-			console.log('\n=== Starting fetch request ===');
+			// console.log('\n=== Starting fetch request ===');
 			
 			// Get package name from URL query parameter
 			const url = new URL(req.url);
@@ -230,16 +230,16 @@ export default {
 	// [[triggers]] configuration.
 	async scheduled(event, env, ctx) {
 		try {
-			console.log('\n=== Starting scheduled task ===');
+			// console.log('\n=== Starting scheduled task ===');
 			
 			// Fetch the RSS feed
-			console.log('Fetching RSS feed...');
+			// console.log('Fetching RSS feed...');
 			const response = await fetch('https://registry.npmjs.org/-/rss');
 			const xmlText = await response.text();
-			console.log('Successfully fetched RSS feed');
+			// console.log('Successfully fetched RSS feed');
 			
 			// Parse the XML content
-			console.log('\nParsing RSS feed...');
+			// console.log('\nParsing RSS feed...');
 			const packages = parseXML(xmlText);
 			console.log(`Processing ${packages.length} packages`);
 			
@@ -249,25 +249,25 @@ export default {
 				
 				// Get the latest version
 				const version = await getLatestVersion(pkg.link);
-				console.log(`Latest version: ${version}`);
+				// console.log(`Latest version: ${version}`);
 				
 				// Check if package exists in database
-				console.log('Checking database for existing package...');
+				// console.log('Checking database for existing package...');
 				const existingPackage = await env.DB.prepare(
 					'SELECT * FROM npm_packages WHERE name = ? AND version = ?'
 				).bind(pkg.name, version).first();
 				
 				if (!existingPackage) {
-					console.log(`Package ${pkg.name} with version ${version} not found in database, saving...`);
+					// console.log(`Package ${pkg.name} with version ${version} not found in database, saving...`);
 					// Save new package to database
 					await env.DB.prepare(
 						'INSERT INTO npm_packages (name, version, published_at) VALUES (?, ?, ?)'
 					).bind(pkg.name, version, pkg.published_at).run();
-					console.log('Package saved to database');
+					// console.log('Package saved to database');
 					
 					// Send notification to Slack
 					if (env.SLACK_WEBHOOK_URL) {
-						console.log('Sending Slack notification...');
+						// console.log('Sending Slack notification...');
 						const message = {
 							data: `New npm package published!\nName: ${pkg.name}\nVersion: ${version}\nDescription: ${pkg.description}\nCreator: ${pkg.creator}\nPublished at: ${pkg.published_at}`,
 							package: pkg.name,
@@ -280,20 +280,20 @@ export default {
 							},
 							body: JSON.stringify(message)
 						});
-						console.log('Slack notification sent');
+						// console.log('Slack notification sent');
 					} else {
-						console.log('No Slack webhook URL configured');
+						// console.log('No Slack webhook URL configured');
 					}
 				} else {
-					console.log('Package already exists in database');
+					// console.log('Package already exists in database');
 				}
 			}
 			
-			console.log('\n=== Scheduled task completed successfully ===');
+			// console.log('\n=== Scheduled task completed successfully ===');
 			return new Response('Successfully processed npm packages', { status: 200 });
 		} catch (error) {
 			console.error('Error in scheduled task:', error);
-			return new Response('Error processing npm packages: ' + error.message, { status: 500 });
+			// return new Response('Error processing npm packages: ' + error.message, { status: 500 });
 		}
 	},
 };
