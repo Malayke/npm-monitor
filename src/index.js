@@ -14,7 +14,7 @@
 
 // Simple XML parser function
 function parseXML(xmlText) {
-	console.log('Starting XML parsing...');
+	// console.log('Starting XML parsing...');
 	const items = [];
 	const itemRegex = /<item>([\s\S]*?)<\/item>/g;
 	const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/;
@@ -74,7 +74,7 @@ async function getLatestVersion(packageLink) {
 		
 		const response = await fetch(versionsUrl);
 		const html = await response.text();
-		console.log('Successfully fetched versions page');
+		// console.log('Successfully fetched versions page');
 		
 		const result = await parseVersions(html);
 		
