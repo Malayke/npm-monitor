@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS npm_packages (
+    name TEXT PRIMARY KEY,
+    version TEXT NOT NULL,
+    published_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+); 

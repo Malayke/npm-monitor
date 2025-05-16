@@ -14,6 +14,16 @@
 		"crons": [
 			"* * * * *"
 		]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "npm-monitor",
+			"database_id": "8e6a2d8e-abb5-476c-afbe-4e40d12694ea"
+		}
+	],
+	"vars": {
+		"SLACK_WEBHOOK_URL": ""
 	}
 	/**
 	 * Smart Placement
