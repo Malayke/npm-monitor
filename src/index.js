@@ -63,7 +63,11 @@ function parseXML(xmlText) {
 	// console.log(`Total items parsed: ${items.length}`);
 	return items;
 }
-
+async function getLatestVersionFromAPI(packageName) {
+	const response = await fetch(`https://registry.npmjs.org/-/package/${packageName}/dist-tags`);
+	const data = await response.json();
+	return data.latest;
+}
 // Function to parse version information from npm package page
 async function getLatestVersion(packageLink) {
 	console.log(`\nFetching version for package: ${packageLink}`);
@@ -248,7 +252,7 @@ export default {
 				console.log(`\nProcessing package: ${pkg.name}`);
 				
 				// Get the latest version
-				const version = await getLatestVersion(pkg.link);
+				const version = await getLatestVersionFromAPI(pkg.name);
 				// console.log(`Latest version: ${version}`);
 				
 				// Check if package exists in database
