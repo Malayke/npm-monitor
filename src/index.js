@@ -42,10 +42,10 @@ function parseXML(xmlText) {
 			const creator = creatorMatch ? creatorMatch[1].trim() : '';
 
 			console.log(`Parsed package: ${name}`);
-			console.log(`Link: ${link}`);
-			console.log(`Published at: ${pubDate.toISOString()}`);
-			console.log(`Description: ${description}`);
-			console.log(`Creator: ${creator}`);
+			// console.log(`Link: ${link}`);
+			// console.log(`Published at: ${pubDate.toISOString()}`);
+			// console.log(`Description: ${description}`);
+			// console.log(`Creator: ${creator}`);
 
 			items.push({
 				name,
