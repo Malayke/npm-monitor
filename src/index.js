@@ -41,7 +41,7 @@ function parseXML(xmlText) {
 			const description = descriptionMatch ? descriptionMatch[1].trim() : '';
 			const creator = creatorMatch ? creatorMatch[1].trim() : '';
 
-			console.log(`Parsed package: ${name}`);
+			// console.log(`Parsed package: ${name}`);
 			// console.log(`Link: ${link}`);
 			// console.log(`Published at: ${pubDate.toISOString()}`);
 			// console.log(`Description: ${description}`);
@@ -228,11 +228,11 @@ export default {
 			}
 			
 			const packageUrl = `https://www.npmjs.com/package/${packageName}?activeTab=versions`;
-			console.log(`Fetching versions from: ${packageUrl}`);
+			// console.log(`Fetching versions from: ${packageUrl}`);
 			
 			const response = await fetch(packageUrl);
 			const html = await response.text();
-			console.log('Successfully fetched versions page');
+			// console.log('Successfully fetched versions page');
 			
 			const result = await parseVersions(html);
 			
@@ -278,10 +278,10 @@ export default {
 				// console.log(`Latest version: ${version}`);
 				
 				// Debug logging
-				console.log('Debug values before DB insert:');
-				console.log('pkg.name:', pkg.name);
-				console.log('version:', version);
-				console.log('pkg.published_at:', pkg.published_at);
+				// console.log('Debug values before DB insert:');
+				// console.log('pkg.name:', pkg.name);
+				// console.log('version:', version);
+				// console.log('pkg.published_at:', pkg.published_at);
 				
 				// Validate values before insert
 				if (!pkg.name || !version || !pkg.published_at) {
