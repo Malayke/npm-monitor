@@ -121,31 +121,6 @@ async function getLatestVersionFromAPI(packageName) {
 		return null;
 	}
 }
-// Function to parse version information from npm package page
-async function getLatestVersion(packageLink) {
-	console.log(`\nFetching version for package: ${packageLink}`);
-	
-	try {
-		const versionsUrl = `${packageLink}?activeTab=versions`;
-		console.log(`Fetching versions from: ${versionsUrl}`);
-		
-		const response = await fetch(versionsUrl);
-		const html = await response.text();
-		// console.log('Successfully fetched versions page');
-		
-		const result = await parseVersions(html);
-		
-		if (!result.closestVersion) {
-			console.error(`Failed to find version for package: ${packageLink}`);
-			throw new Error(`No version found for package: ${packageLink}`);
-		}
-		
-		return result.closestVersion;
-	} catch (error) {
-		console.error(`Error fetching version for ${packageLink}:`, error);
-		throw error; // Re-throw the error instead of returning 'latest'
-	}
-}
 
 // Function to parse versions from HTML content
 async function parseVersions(html) {
