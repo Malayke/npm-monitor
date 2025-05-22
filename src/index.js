@@ -63,6 +63,44 @@ function parseXML(xmlText) {
 	// console.log(`Total items parsed: ${items.length}`);
 	return items;
 }
+
+/**
+ * Finds the latest version from a JSON object containing version strings
+ * @param {Object} versions - JSON object with environment names as keys and version strings as values
+ * @returns {string} - The latest version string
+ */
+function findLatestVersion(versions) {
+	if (!versions || typeof versions !== 'object' || Object.keys(versions).length === 0) {
+	  return null;
+	}
+	
+	// Extract all version strings
+	const versionStrings = Object.values(versions);
+	
+	// Compare versions by splitting into components and comparing numerically
+	return versionStrings.reduce((latestVersion, currentVersion) => {
+	  const latestParts = latestVersion.split('.').map(Number);
+	  const currentParts = currentVersion.split('.').map(Number);
+	  
+	  // Compare each part of the version
+	  for (let i = 0; i < Math.max(latestParts.length, currentParts.length); i++) {
+		// If a part is missing, treat it as 0
+		const latestPart = latestParts[i] || 0;
+		const currentPart = currentParts[i] || 0;
+		
+		if (currentPart > latestPart) {
+		  return currentVersion;
+		} else if (currentPart < latestPart) {
+		  return latestVersion;
+		}
+	  }
+	  
+	  // If all parts are equal, return the current version
+	  return latestVersion;
+	});
+  }
+  
+
 async function getLatestVersionFromAPI(packageName) {
 	try {
 		const response = await fetch(`https://registry.npmjs.org/-/package/${packageName}/dist-tags`);
@@ -75,16 +113,9 @@ async function getLatestVersionFromAPI(packageName) {
 			console.error(`No data found for ${packageName}`);
 			return null;
 		}
-		// If both alpha and latest tags exist, return alpha
-		if (data.alpha && data.latest) {
-			return data.alpha;
-		}
-		// Otherwise return the latest version if it exists
-		if (data.latest) {
-			return data.latest;
-		}
-		console.error(`No latest version found for ${packageName}`);
-		return null;
+		const latestVersion = findLatestVersion(data);
+		// console.log(`Latest version for ${packageName}: ${latestVersion}`);
+		return latestVersion;
 	} catch (error) {
 		console.error(`Error fetching version for ${packageName}:`, error);
 		return null;
@@ -209,6 +240,58 @@ async function parseVersions(html) {
 	};
 }
 
+// Function to check if package exists in database
+async function checkPackageExists(env, name, version) {
+	const result = await env.DB.prepare(
+		'SELECT 1 FROM npm_packages WHERE name = ? AND version = ?'
+	).bind(name, version).first();
+	return result !== null;
+}
+
+// Queue consumer function
+async function queueConsumer(batch, env) {
+	console.log(`Queue consumer: Processing batch of ${batch.messages.length} messages`);
+	
+	for (const message of batch.messages) {
+		try {
+			const { name, version, published_at, description, creator } = message.body;
+			
+			// Check if package already exists
+			const exists = await checkPackageExists(env, name, version);
+			if (exists) {
+				// console.log(`Package ${name} version ${version} already exists in database`);
+				continue;
+			}
+			
+			// Save package to database
+			await env.DB.prepare(
+				'INSERT INTO npm_packages (name, version, published_at) VALUES (?, ?, ?)'
+			).bind(name, version, published_at).run();
+			console.log(`Queue consumer: Package: ${name} - ${version} saved to database`);
+			
+			// Send notification to Slack
+			if (env.SLACK_WEBHOOK_URL) {
+				const message = {
+					data: `New npm package published!\nName: ${name}\nVersion: ${version}\nDescription: ${description}\nCreator: ${creator}\nPublished at: ${published_at}`,
+					package: name,
+				};
+				
+				await fetch(env.SLACK_WEBHOOK_URL, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(message)
+				});
+			}
+		} catch (error) {
+			console.error('Queue consumer: Error processing message:', error);
+			// Don't throw the error to prevent message retry
+			// The message will be retried automatically based on max_retries configuration
+		}
+	}
+}
+
 export default {
 	async fetch(req) {
 		try {
@@ -256,36 +339,21 @@ export default {
 	// [[triggers]] configuration.
 	async scheduled(event, env, ctx) {
 		try {
-			// console.log('\n=== Starting scheduled task ===');
-			
 			// Fetch the RSS feed
-			// console.log('Fetching RSS feed...');
 			const response = await fetch('https://registry.npmjs.org/-/rss');
 			const xmlText = await response.text();
-			// console.log('Successfully fetched RSS feed');
 			
 			// Parse the XML content
-			// console.log('\nParsing RSS feed...');
 			const packages = parseXML(xmlText);
-			// console.log(`Processing ${packages.length} packages`);
 			
 			// Process each package
 			for (const pkg of packages) {
-				// console.log(`\nProcessing package: ${pkg.name}`);
-				
 				// Get the latest version
 				const version = await getLatestVersionFromAPI(pkg.name);
-				// console.log(`Latest version: ${version}`);
 				
-				// Debug logging
-				// console.log('Debug values before DB insert:');
-				// console.log('pkg.name:', pkg.name);
-				// console.log('version:', version);
-				// console.log('pkg.published_at:', pkg.published_at);
-				
-				// Validate values before insert
+				// Validate values before queueing
 				if (!pkg.name || !version || !pkg.published_at) {
-					console.error('Skipping database insert due to missing values:', {
+					console.error('Skipping queue due to missing values:', {
 						name: pkg.name,
 						version: version,
 						published_at: pkg.published_at
@@ -293,38 +361,26 @@ export default {
 					continue;
 				}
 				
-				// Save package to database
-				await env.DB.prepare(
-					'INSERT INTO npm_packages (name, version, published_at) VALUES (?, ?, ?)'
-				).bind(pkg.name, version, pkg.published_at).run();
-				console.log(`Package: ${pkg.name} - ${version} saved to database`);
-				
-				// Send notification to Slack
-				if (env.SLACK_WEBHOOK_URL) {
-					// console.log('Sending Slack notification...');
-					const message = {
-						data: `New npm package published!\nName: ${pkg.name}\nVersion: ${version}\nDescription: ${pkg.description}\nCreator: ${pkg.creator}\nPublished at: ${pkg.published_at}`,
-						package: pkg.name,
-					};
-					
-					await fetch(env.SLACK_WEBHOOK_URL, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(message)
-					});
-					// console.log('Slack notification sent');
-				} else {
-					// console.log('No Slack webhook URL configured');
-				}
+				// Send package to queue
+				await env.PACKAGE_QUEUE.send({
+					name: pkg.name,
+					version: version,
+					published_at: pkg.published_at,
+					description: pkg.description,
+					creator: pkg.creator
+				});
+				console.log(`Scheduled handler: Package: ${pkg.name} - ${version} queued for processing`);
 			}
 			
-			// console.log('\n=== Scheduled task completed successfully ===');
-			return new Response('Successfully processed npm packages', { status: 200 });
+			return new Response('Successfully queued npm packages', { status: 200 });
 		} catch (error) {
-			console.error('Error in scheduled task:', error);
-			// return new Response('Error processing npm packages: ' + error.message, { status: 500 });
+			console.error('Scheduled handler: Error in scheduled task:', error);
+
 		}
 	},
+
+	// Queue consumer handler
+	async queue(batch, env, ctx) {
+		await queueConsumer(batch, env);
+	}
 };

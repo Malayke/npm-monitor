@@ -22,6 +22,22 @@
 			"database_id": "8e6a2d8e-abb5-476c-afbe-4e40d12694ea"
 		}
 	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "PACKAGE_QUEUE",
+				"queue": "npm-monitor"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "npm-monitor",
+				"max_batch_size": 10,
+				"max_batch_timeout": 30,
+				"max_retries": 3
+			}
+		]
+	},
 	"vars": {
 		// "SLACK_WEBHOOK_URL": "https://hooks.slack.com/triggers/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"
 	}
